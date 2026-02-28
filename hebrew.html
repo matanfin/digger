@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>משחק משפטים! ✨</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Rubik', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #e8f5e9, #e3f2fd, #fce4ec, #fff9c4);
+    background-size: 400% 400%;
+    animation: bgShift 12s ease infinite;
+    overflow: hidden;
+    direction: rtl;
+  }
+  @keyframes bgShift {
+    0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%}
+  }
+
+  .container {
+    text-align: center;
+    background: rgba(255,255,255,0.88);
+    border-radius: 30px;
+    padding: 35px 40px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    max-width: 580px;
+    width: 92%;
+  }
+
+  h1 { font-size: 2.2em; font-weight: 800; color: #1565c0; margin-bottom: 5px; }
+  .subtitle { font-size: 1.2em; color: #888; margin-bottom: 18px; }
+
+  .score-bar {
+    display: flex; justify-content: center; gap: 30px;
+    margin-bottom: 20px; font-size: 1.1em; font-weight: 700;
+  }
+  .score-bar .correct { color: #4caf50; }
+  .score-bar .wrong { color: #f44336; }
+  .score-bar .streak { color: #ff9800; }
+
+  .sentence {
+    font-size: 2em; font-weight: 700; color: #333;
+    margin: 25px 0; line-height: 1.6; min-height: 80px;
+  }
+  .blank {
+    display: inline-block;
+    border-bottom: 4px solid #e91e63;
+    min-width: 80px;
+    color: #e91e63;
+    font-weight: 800;
+  }
+
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 20px 0;
+  }
+
+  .opt-btn {
+    font-family: 'Rubik', sans-serif;
+    font-size: 1.5em;
+    font-weight: 700;
+    padding: 16px 10px;
+    border: 3px solid #bbdefb;
+    border-radius: 18px;
+    background: #e3f2fd;
+    color: #1565c0;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .opt-btn:hover { background: #bbdefb; border-color: #1565c0; transform: scale(1.04); }
+  .opt-btn:active { transform: scale(0.97); }
+  .opt-btn.correct-pick { background: #c8e6c9; border-color: #4caf50; color: #2e7d32; }
+  .opt-btn.wrong-pick { background: #ffcdd2; border-color: #f44336; color: #c62828; }
+  .opt-btn:disabled { cursor: default; opacity: 0.7; }
+
+  .hint { font-size: 0.95em; color: #999; margin-top: 10px; }
+
+  /* Feedback overlay */
+  .feedback-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    z-index: 100; animation: fadeIn 0.3s ease;
+  }
+  .feedback-overlay.correct-bg { background: linear-gradient(135deg, #e8f5e9, #c8e6c9, #a5d6a7); }
+  .feedback-overlay.wrong-bg { background: linear-gradient(135deg, #ffebee, #ffcdd2, #ef9a9a); }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes bounceIn { 0%{transform:scale(0)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+  .feedback-text { font-size: 2em; font-weight: 800; margin-top: 10px; }
+  .feedback-text.yay { color: #2e7d32; }
+  .feedback-text.oops { color: #c62828; }
+  .feedback-answer { font-size: 1.3em; font-weight: 600; color: #555; margin-top: 8px; }
+
+  .timer-bar {
+    width: 300px; height: 10px; background: rgba(0,0,0,0.1);
+    border-radius: 5px; margin-top: 20px; overflow: hidden;
+  }
+  .timer-fill { height: 100%; border-radius: 5px; animation: timerShrink 7s linear forwards; }
+  .timer-fill.green { background: #4caf50; }
+  .timer-fill.red { background: #f44336; }
+  @keyframes timerShrink { from{width:100%} to{width:0%} }
+
+  .confetti {
+    position: fixed; top: -10px; width: 10px; height: 10px;
+    border-radius: 2px; animation: confettiFall linear forwards;
+    z-index: 101; pointer-events: none;
+  }
+  @keyframes confettiFall { to { top: 110vh; transform: rotate(720deg); } }
+
+  .deco {
+    position: fixed; font-size: 2em; opacity: 0.3;
+    animation: floaty 6s ease-in-out infinite; pointer-events: none; z-index: -1;
+  }
+  @keyframes floaty { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+</style>
+</head>
+<body>
+
+<div class="deco" style="top:10%;right:5%;animation-delay:0s">🌸</div>
+<div class="deco" style="top:20%;left:8%;animation-delay:1s">⭐</div>
+<div class="deco" style="top:60%;right:8%;animation-delay:2s">🦋</div>
+<div class="deco" style="top:70%;left:5%;animation-delay:0.5s">🌈</div>
+<div class="deco" style="top:40%;right:3%;animation-delay:1.5s">💖</div>
+<div class="deco" style="top:85%;left:12%;animation-delay:3s">✨</div>
+
+<div class="container">
+  <h1>השלם את המשפט! ✨</h1>
+  <div class="subtitle">🌟 בחר את המילה הנכונה 🌟</div>
+
+  <div class="score-bar">
+    <span class="correct">✅ <span id="correctCount">0</span></span>
+    <span class="streak">🔥 <span id="streakCount">0</span></span>
+    <span class="wrong">❌ <span id="wrongCount">0</span></span>
+  </div>
+
+  <div class="sentence" id="sentence">...</div>
+
+  <div class="options" id="options"></div>
+
+  <div class="hint">לחץ על התשובה הנכונה!</div>
+</div>
+
+<div class="feedback-overlay" id="feedbackOverlay" style="display:none"></div>
+
+<script>
+// === QUESTIONS ===
+// Each: { sentence (with ___ for blank), answer, options (3 wrong + 1 correct, shuffled later) }
+const QUESTIONS = [
+  { s: 'השמש ___ בבוקר', a: 'זורחת', w: ['שוקעת', 'יורדת', 'נעלמת'] },
+  { s: 'הילד ___ כוס מים', a: 'שותה', w: ['אוכל', 'כותב', 'רוקד'] },
+  { s: 'הכלב ___ בפארק', a: 'רץ', w: ['טס', 'שר', 'בישל'] },
+  { s: 'אני ___ ספר מעניין', a: 'קורא', w: ['שומע', 'מבשל', 'שותל'] },
+  { s: 'העוף ___ בשמיים', a: 'עף', w: ['שוחה', 'רוקד', 'ישן'] },
+  { s: 'הדג ___ במים', a: 'שוחה', w: ['עף', 'רץ', 'קופץ'] },
+  { s: 'התינוק ___ בלילה', a: 'ישן', w: ['לומד', 'רוקד', 'כותב'] },
+  { s: 'הילדה ___ תמונה יפה', a: 'מציירת', w: ['שוברת', 'זורקת', 'מוחקת'] },
+  { s: 'אנחנו ___ לבית הספר', a: 'הולכים', w: ['טסים', 'שוחים', 'ישנים'] },
+  { s: 'אמא ___ עוגה טעימה', a: 'אופה', w: ['שוברת', 'זורקת', 'קוראת'] },
+  { s: 'הילד ___ את הידיים עם סבון', a: 'שוטף', w: ['מייבש', 'שובר', 'צובע'] },
+  { s: 'הכוכבים ___ בלילה', a: 'נוצצים', w: ['ישנים', 'נופלים', 'שרים'] },
+  { s: 'הגשם ___ מהשמיים', a: 'יורד', w: ['עולה', 'קופץ', 'רוקד'] },
+  { s: 'החתול ___ על הספה', a: 'יושב', w: ['טס', 'שוחה', 'כותב'] },
+  { s: 'הילד ___ כדור ברגל', a: 'משחק', w: ['אוכל', 'שותה', 'כותב'] },
+  { s: 'אבא ___ את האוטו', a: 'נוהג', w: ['מבשל', 'כותב', 'מצייר'] },
+  { s: 'הפרח ___ באביב', a: 'פורח', w: ['נובל', 'שר', 'רוקד'] },
+  { s: 'הילדה ___ שיר יפה', a: 'שרה', w: ['בנתה', 'זרקה', 'שברה'] },
+  { s: 'הרוח ___ חזק בחורף', a: 'נושבת', w: ['ישנה', 'שותה', 'קוראת'] },
+  { s: 'אני ___ את השיניים כל בוקר', a: 'מצחצח', w: ['מבשל', 'שותל', 'כותב'] },
+  { s: 'הילד ___ מכתב לסבתא', a: 'כותב', w: ['מבשל', 'שוחה', 'ישן'] },
+  { s: 'הצפרדע ___ למים', a: 'קופצת', w: ['טסה', 'שרה', 'כתבה'] },
+  { s: 'המורה ___ סיפור לילדים', a: 'מספרת', w: ['בישלה', 'שברה', 'צבעה'] },
+  { s: 'הילד ___ נעליים חדשות', a: 'נועל', w: ['אוכל', 'שותה', 'מצייר'] },
+  { s: 'הארנב ___ מהר מאוד', a: 'קופץ', w: ['טס', 'שוחה', 'מבשל'] },
+  { s: 'אני ___ גלידה בקיץ', a: 'אוכל', w: ['שותל', 'כותב', 'מצייר'] },
+  { s: 'הילדים ___ בחצר', a: 'משחקים', w: ['ישנים', 'מבשלים', 'כותבים'] },
+  { s: 'הספר ___ על המדף', a: 'מונח', w: ['רוקד', 'שר', 'עף'] },
+  { s: 'השלג ___ בחורף', a: 'יורד', w: ['עולה', 'פורח', 'שוחה'] },
+  { s: 'הילדה ___ בובה חדשה', a: 'מחבקת', w: ['זורקת', 'שוברת', 'מוחקת'] },
+];
+
+// Shuffle helper
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// === SOUNDS ===
+
+function sfxFail() {
+  const r = Math.random();
+  if (r < 0.33) {
+    new Audio('2.opus').play().catch(() => {});
+  } else if (r < 0.66) {
+    new Audio('3.opus').play().catch(() => {});
+  } else {
+    const c = new (window.AudioContext || window.webkitAudioContext)();
+    const now = c.currentTime, dur = 0.9;
+    const osc = c.createOscillator(), g = c.createGain();
+    osc.connect(g); g.connect(c.destination); osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(100, now);
+    for (let t = 0; t < dur; t += 0.07) osc.frequency.setValueAtTime(80 + Math.random()*40, now + t);
+    osc.frequency.exponentialRampToValueAtTime(30, now + dur);
+    g.gain.setValueAtTime(0.15, now); g.gain.linearRampToValueAtTime(0, now + dur);
+    osc.start(now); osc.stop(now + dur);
+    const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/c.sampleRate*3) * 0.5;
+    const ns = c.createBufferSource(); ns.buffer = buf;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 250;
+    const ng = c.createGain(); ng.gain.setValueAtTime(0.12, now); ng.gain.linearRampToValueAtTime(0, now + dur);
+    ns.connect(lp); lp.connect(ng); ng.connect(c.destination);
+    ns.start(now); ns.stop(now + dur);
+  }
+}
+
+// === PRAISE ===
+const PRAISE = ['!מדהים 🎉', '!כוכבת ⭐', '!מושלם 🤩', '!נפלא 💖', '!אלופה 🌟', '!יופי 🎊', '!כל הכבוד 💪', '!מעולה 🥳'];
+const ENCOURAGE = ['!כמעט! נסי שוב 💪', '!לא בדיוק, את תצליחי 🌟', '!קרוב! הבא יהיה שלך 💖', '!לא נורא, ממשיכים ✨'];
+
+// === STATE ===
+let correctCount = 0, wrongCount = 0, streak = 0;
+let currentQ = null;
+let feedbackTimer = null, isShowingFeedback = false;
+let usedQuestions = [];
+
+function pickQuestion() {
+  if (usedQuestions.length >= QUESTIONS.length) usedQuestions = [];
+  let q;
+  do { q = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]; } while (usedQuestions.includes(q));
+  usedQuestions.push(q);
+  return q;
+}
+
+function showQuestion() {
+  currentQ = pickQuestion();
+  const sentenceHTML = currentQ.s.replace('___', '<span class="blank">______</span>');
+  document.getElementById('sentence').innerHTML = sentenceHTML;
+
+  const opts = shuffle([currentQ.a, ...currentQ.w]);
+  const optDiv = document.getElementById('options');
+  optDiv.innerHTML = '';
+  opts.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = o;
+    btn.onclick = () => checkAnswer(o, btn);
+    optDiv.appendChild(btn);
+  });
+}
+
+function checkAnswer(chosen, btn) {
+  if (isShowingFeedback) return;
+  const isCorrect = chosen === currentQ.a;
+
+  // Highlight buttons
+  document.querySelectorAll('.opt-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === currentQ.a) b.classList.add('correct-pick');
+  });
+  if (!isCorrect) btn.classList.add('wrong-pick');
+
+  if (isCorrect) {
+    correctCount++; streak++;
+    document.getElementById('correctCount').textContent = correctCount;
+    document.getElementById('streakCount').textContent = streak;
+  } else {
+    wrongCount++; streak = 0;
+    document.getElementById('wrongCount').textContent = wrongCount;
+    document.getElementById('streakCount').textContent = streak;
+  }
+
+  setTimeout(() => showFeedback(isCorrect), 500);
+}
+
+function showFeedback(isCorrect) {
+  isShowingFeedback = true;
+  const overlay = document.getElementById('feedbackOverlay');
+  const fullSentence = currentQ.s.replace('___', '<b style="color:#1565c0">' + currentQ.a + '</b>');
+
+  if (isCorrect) {
+    const praise = PRAISE[Math.floor(Math.random() * PRAISE.length)];
+    overlay.className = 'feedback-overlay correct-bg';
+    overlay.innerHTML = `
+      <img src="1.jpeg" alt="!כל הכבוד" style="width:260px;max-height:300px;border-radius:20px;object-fit:contain;box-shadow:0 8px 30px rgba(0,0,0,.15);animation:bounceIn .5s ease">
+      <div class="feedback-text yay">${praise}</div>
+      <div class="feedback-answer">${fullSentence}</div>
+      <div class="timer-bar"><div class="timer-fill green"></div></div>
+    `;
+    spawnConfetti();
+  } else {
+    const encourage = ENCOURAGE[Math.floor(Math.random() * ENCOURAGE.length)];
+    overlay.className = 'feedback-overlay wrong-bg';
+    overlay.innerHTML = `
+      <div style="font-size:8em;animation:bounceIn .5s ease">🧒💦</div>
+      <div class="feedback-text oops">${encourage}</div>
+      <div class="feedback-answer">${fullSentence}</div>
+      <div class="timer-bar"><div class="timer-fill red"></div></div>
+    `;
+    sfxFail();
+  }
+
+  overlay.style.display = 'flex';
+  clearTimeout(feedbackTimer);
+  feedbackTimer = setTimeout(() => {
+    overlay.style.display = 'none';
+    isShowingFeedback = false;
+    showQuestion();
+  }, 7000);
+}
+
+function spawnConfetti() {
+  const colors = ['#e91e63','#9c27b0','#2196f3','#4caf50','#ff9800','#ffeb3b','#00bcd4'];
+  for (let i = 0; i < 40; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = (2 + Math.random() * 3) + 's';
+    c.style.animationDelay = Math.random() * 0.8 + 's';
+    c.style.width = (6 + Math.random() * 8) + 'px';
+    c.style.height = (6 + Math.random() * 8) + 'px';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 6000);
+  }
+}
+
+// Click overlay to skip
+document.getElementById('feedbackOverlay').addEventListener('click', () => {
+  if (!isShowingFeedback) return;
+  clearTimeout(feedbackTimer);
+  document.getElementById('feedbackOverlay').style.display = 'none';
+  isShowingFeedback = false;
+  showQuestion();
+});
+
+// Start
+showQuestion();
+</script>
+</body>
+</html>
