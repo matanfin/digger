@@ -201,30 +201,8 @@ function shuffle(arr) {
 // === SOUNDS ===
 
 function sfxFail() {
-  const r = Math.random();
-  if (r < 0.33) {
-    new Audio('2.opus').play().catch(() => {});
-  } else if (r < 0.66) {
-    new Audio('3.opus').play().catch(() => {});
-  } else {
-    const c = new (window.AudioContext || window.webkitAudioContext)();
-    const now = c.currentTime, dur = 0.9;
-    const osc = c.createOscillator(), g = c.createGain();
-    osc.connect(g); g.connect(c.destination); osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(100, now);
-    for (let t = 0; t < dur; t += 0.07) osc.frequency.setValueAtTime(80 + Math.random()*40, now + t);
-    osc.frequency.exponentialRampToValueAtTime(30, now + dur);
-    g.gain.setValueAtTime(0.15, now); g.gain.linearRampToValueAtTime(0, now + dur);
-    osc.start(now); osc.stop(now + dur);
-    const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/c.sampleRate*3) * 0.5;
-    const ns = c.createBufferSource(); ns.buffer = buf;
-    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 250;
-    const ng = c.createGain(); ng.gain.setValueAtTime(0.12, now); ng.gain.linearRampToValueAtTime(0, now + dur);
-    ns.connect(lp); lp.connect(ng); ng.connect(c.destination);
-    ns.start(now); ns.stop(now + dur);
-  }
+  const src = Math.random() < 0.5 ? '2.opus' : '3.opus';
+  new Audio(src).play().catch(() => {});
 }
 
 // === PRAISE ===
